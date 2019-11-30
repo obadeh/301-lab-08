@@ -75,7 +75,7 @@ let city=request.query.data;
    console.log('is it in database?: ', results.rowCount);
    if (results.rowCount) { 
     
-    return response.status(200).json(results.rows);
+    return response.status(200).json(results.rows[0]);
     }
    else {getLocation(city,response)
   // .then(data=> response.status(200).json(data))
@@ -101,7 +101,7 @@ function getLocation(city,response) {
       client.query(SQL, safeValues)
         .then(results => {
           console.log('from database after add it directly: ', results.rows);
-          return response.status(200).json(results.rows);
+          return response.status(200).json(results.rows[0]);
            
 
 
@@ -128,7 +128,7 @@ function Location(city, data) {
 function weatherHandler(request, response) {
   // Query String = ?a=b&c=d
   getWeather(request.query.data)
-    .then(weatherData => res.status(200).json(weatherData));
+    .then(weatherData => response.status(200).json(weatherData));
 
 }
 
@@ -156,7 +156,7 @@ function eventHandler(request, response) {
   // Query String = ?a=b&c=d
 
   getEvent(request.query.data.search_query)
-    .then(eventData => res.status(200).json(eventData));
+    .then(eventData => response.status(200).json(eventData));
 
 }
 
