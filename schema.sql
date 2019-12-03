@@ -7,3 +7,5 @@ CREATE TABLE geo (
     latitude float,
     longitude float
 );
+
+INSERT INTO geo (search_query, formatted_query, latitude, longitude) VALUES ('city','city','22','22');

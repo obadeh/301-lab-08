@@ -35,34 +35,6 @@ function addToDataBase(request, response) {
     })
     .catch(error => errorHandler(error));
 };
-// function addTo(newCity){
-
-
-
-// }
-
-
-
-// function locationHandlerSql(req,res) {
-//   // Query String = ?a=b&c=d
-//   getLocationSql(req.query.data)
-//     .then( (locationData) => res.status(200).json(locationData) );
-// }
-
-// function getLocationSql(city) {
-//   // No longer get from file
-//   // let data = require('./data/geo.json');
-
-//   // Get it from Google Directly`
-//   const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${city}&key=${process.env.API}`
-
-//   return superagent.get(url)
-//     .then( data => {
-//       return new Location(city, data.body);
-//     })
-
-// }
-
 
 
 // Get everything in the database
@@ -86,40 +58,58 @@ function showTable(request,response){
 
 
 /////////////////
-// make the the callBack function a seprate fuctions :locationHandler,weatherHandler
 
 app.get('/location', locationHandler);
 app.get('/weather', weatherHandler);
 app.get('/events', eventHandler);
 
-function locationHandler(req, res) {
+function locationHandler(request, response) {
   // Query String = ?a=b&c=d
-  getLocation(req.query.data)
-    .then((locationData) => res.status(200).json(locationData));
+let city=request.query.data;
+  console.log(' request.query.data: ',request.query.data )
+  
+  let SQL = 'SELECT * FROM geo WHERE search_query = $1 ;';
+ let values=[city];
+ client.query(SQL,values)
+ .then(results=>{
+   console.log('is it in database?: ', results.rowCount);
+   if (results.rowCount) { 
+    
+    return response.status(200).json(results.rows[0]);
+    }
+   else {getLocation(city,response)
+  // .then(data=> response.status(200).json(data))
+  return newCity;
+  }
+ })
+   
 }
 
-function getLocation(city) {
-  // No longer get from file
-  // let data = require('./data/geo.json');
+function getLocation(city,response) {
+  
 
-  // Get it from Google Directly`
+
   const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${city}&key=${process.env.API}`
-
-  return superagent.get(url)
+  superagent.get(url)
     .then(data => {
+      console.log('data from url : ', data.body);
       let newCity = new Location(city, data.body)
       // add to database
-
+      console.log('newCity : ', newCity);
       let SQL = 'INSERT INTO geo (search_query ,formatted_query,latitude, longitude) VALUES ($1, $2, $3, $4) RETURNING *';
       let safeValues = [newCity.search_query, newCity.formatted_query, newCity.latitude, newCity.longitude];
       client.query(SQL, safeValues)
         .then(results => {
-          response.status(200).json(results);
-        })
+          console.log('from database after add it directly: ', results.rows);
+          return response.status(200).json(results.rows[0]);
+           
+
+
+         })
         .catch(error => errorHandler(error));
 
         //////
-      return newCity;
+        return newCity;
     })
 
 }
@@ -135,10 +125,10 @@ function Location(city, data) {
 // WEATHER
 // ------------------------------- _________________ //
 
-function weatherHandler(req, res) {
+function weatherHandler(request, response) {
   // Query String = ?a=b&c=d
-  getWeather(req.query.data)
-    .then(weatherData => res.status(200).json(weatherData));
+  getWeather(request.query.data)
+    .then(weatherData => response.status(200).json(weatherData));
 
 }
 
@@ -162,24 +152,27 @@ function Weather(day) {
 // add event >>>>>>>>>>>>>>>
 
 
-function eventHandler(req, res) {
+function eventHandler(request, response) {
   // Query String = ?a=b&c=d
-  getEvent(req.query.data.search_query)
-    .then(eventData => res.status(200).json(eventData));
+
+  getEvent(request.query.data.search_query)
+    .then(eventData => response.status(200).json(eventData));
 
 }
 
 function getEvent(city) {
   // let data = require('./data/darksky.json');
+  console.log('city : ', city);
   const url = `http://api.eventful.com/json/events/search?app_key=${process.env.EVENT_KEY}&location=${city}`;
   return superagent.get(url)
     .then(data => {
       let eventA = JSON.parse(data.text);
-
+      console.log('eventA : ',eventA );
+      if(eventA.events){
       return eventA.events.event.map((day) => {
         return new Event(day);
       });
-    });
+    }});
 }
 
 function Event(day) {
