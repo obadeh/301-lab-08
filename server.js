@@ -168,10 +168,11 @@ function getEvent(city) {
     .then(data => {
       let eventA = JSON.parse(data.text);
       console.log('eventA : ',eventA );
+      if(eventA.events){
       return eventA.events.event.map((day) => {
         return new Event(day);
       });
-    });
+    }});
 }
 
 function Event(day) {
